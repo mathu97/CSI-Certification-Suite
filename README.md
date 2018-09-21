@@ -13,13 +13,14 @@
 
 #### Running the CSI API validation on a Driver
 - Clone the csi-test [repo](https://github.com/kubernetes-csi/csi-test)
-- Build the csi-sanity tool: `cd cmd/csi-sanity/` and run `make all`
+- Build the csi-sanity tool: `cd go/src/github.com/kubernetes-csi/csi-test/cmd/csi-sanity/` and run `make all`
 - Run a CSI Driver (In this example the [ebs csi driver](https://github.com/bertinatto/ebs-csi) is used) 
   - Launch an AWS EC2 instance, connect to it, and clone the driver repository
+  - `cd go/src/github.com/bertinatto/ebs-csi/`
   - Install Dependencies: `dep ensure`
   - Build: `make ebs-csi-driver`
   - Run: `bin/ebs-csi-driver -endpoint tcp://127.0.0.1:10000 -logtostderr -v 5`
 - Run the sanity test on the ebs driver
-  - `cd csi-test/cmd/csi-sanity/`
+  - `cd go/src/github.com/kubernetes-csi/csi-test/cmd/csi-sanity/`
   - `./csi-sanity -csi.endpoint 127.0.0.1:10000`
 - The results of the test run will be printed
