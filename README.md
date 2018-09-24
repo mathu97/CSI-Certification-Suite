@@ -24,3 +24,21 @@
   - `cd go/src/github.com/kubernetes-csi/csi-test/cmd/csi-sanity/`
   - `./csi-sanity -csi.endpoint 127.0.0.1:10000`
 - The results of the test run will be printed
+
+## (P1) As a storage vendor & Kube admin I want to run a certification tests against my CSI driver that validates it against a CO 
+#### Gap Analysis (What needs to be added on top of the sanity tests for P1)
+- Add API Validation tests for Topology and Quota
+- Requires Functional tests (Ensure that they actually work in kubernetes) for the following:
+  - Provision
+  - Delete
+  - Attach
+  - Detach
+  - File write / read validation on CSI PV
+  - Block volume read/write validation on CSI PV
+  - Resize
+  - Quota
+  - Topology
+  - Create Snapshot
+  - Delete Snapshot 
+  - Test against non dynamically provisioned volume
+#### WIP ...
