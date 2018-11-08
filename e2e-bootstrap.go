@@ -1,4 +1,4 @@
-package CSI_Certification_Suite
+package main
 
 import (
 	"flag"
@@ -65,13 +65,13 @@ func main() {
 		panic(err.Error())
 	}
 
-	clientset, cErr := kubernetes.NewForConfig(config)
+	clientSet, cErr := kubernetes.NewForConfig(config)
 	if cErr != nil {
-		panic(err.Error())
+		panic(cErr.Error())
 	}
 
-	//Create a Storage Class
-	if _, scErr := clientset.StorageV1().StorageClasses().Create(newStorageClass); scErr != nil {
+	//Create the e2e-csi-test storage class object in the cluster
+	if _, scErr := clientSet.StorageV1().StorageClasses().Create(newStorageClass); scErr != nil {
 		panic(scErr.Error())
 	}
 
