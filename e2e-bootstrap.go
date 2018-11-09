@@ -8,7 +8,9 @@ import (
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+		"k8s.io/client-go/tools/clientcmd"
+	"path/filepath"
+	"os"
 )
 
 var deleteReclaimPolicy = v1.PersistentVolumeReclaimDelete
@@ -45,11 +47,24 @@ func createStorageClass(driverName string) *storage.StorageClass {
 
 func main() {
 	endPointPtr := flag.String("endpoint", "foo", "a string")
+
+	var kubeconfig *string
+	if home := homeDir(); home != "" {
+		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	} else {
+		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	}
+
 	flag.Parse()
 
 	if *endPointPtr == "foo" {
 		fmt.Errorf("Need to provide Driver Endpoint\n")
 		return
+	}
+
+	config, confErr := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	if confErr != nil {
+		panic(confErr.Error())
 	}
 
 	//Get the driver's name
@@ -58,17 +73,12 @@ func main() {
 		fmt.Errorf("Unable to get Driver Name\n")
 	}
 
+	clientSet, csErr := kubernetes.NewForConfig(config)
+	if csErr != nil {
+		panic(csErr.Error())
+	}
+
 	newStorageClass := createStorageClass(driverName)
-
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
-
-	clientSet, cErr := kubernetes.NewForConfig(config)
-	if cErr != nil {
-		panic(cErr.Error())
-	}
 
 	//Create the e2e-csi-test storage class object in the cluster
 	if _, scErr := clientSet.StorageV1().StorageClasses().Create(newStorageClass); scErr != nil {
@@ -76,3 +86,11 @@ func main() {
 	}
 
 }
+
+func homeDir() string {
+	if h := os.Getenv("HOME"); h != "" {
+		return h
+	}
+	return os.Getenv("USERPROFILE") // windows
+}
+

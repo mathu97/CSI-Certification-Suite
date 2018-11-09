@@ -106,6 +106,12 @@
   version = "v0.5.0"
 
 [[projects]]
+  name = "github.com/imdario/mergo"
+  packages = ["."]
+  revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
+  version = "v0.3.6"
+
+[[projects]]
   name = "github.com/json-iterator/go"
   packages = ["."]
   revision = "1624edc4454b8682399def8740d46db5e4362ba4"
@@ -118,7 +124,7 @@
     "pkg/controller",
     "pkg/features"
   ]
-revision = "1cd1c20a6d4b2fcd25c98a008385b436d61d46a4"
+  revision = "1cd1c20a6d4b2fcd25c98a008385b436d61d46a4"
 
 [[projects]]
   name = "github.com/kubernetes-csi/external-snapshotter"
@@ -560,8 +566,12 @@ revision = "1cd1c20a6d4b2fcd25c98a008385b436d61d46a4"
     "plugin/pkg/client/auth/exec",
     "rest",
     "rest/watch",
+    "tools/auth",
     "tools/cache",
+    "tools/clientcmd",
     "tools/clientcmd/api",
+    "tools/clientcmd/api/latest",
+    "tools/clientcmd/api/v1",
     "tools/leaderelection",
     "tools/leaderelection/resourcelock",
     "tools/metrics",
@@ -573,6 +583,7 @@ revision = "1cd1c20a6d4b2fcd25c98a008385b436d61d46a4"
     "util/cert",
     "util/connrotation",
     "util/flowcontrol",
+    "util/homedir",
     "util/integer",
     "util/retry",
     "util/workqueue"
@@ -610,6 +621,6 @@ revision = "1cd1c20a6d4b2fcd25c98a008385b436d61d46a4"
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "82a7cb91c105141d3d05e9045f11cfc0acd58f8a6017b9c8d499b1d1405721df"
+  inputs-digest = "f074edc333783a609b20414287c8cad2ce9a6242e3189b46ac4b2966b4ba71ad"
   solver-name = "gps-cdcl"
   solver-version = 1
