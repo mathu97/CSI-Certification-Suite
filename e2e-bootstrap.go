@@ -81,7 +81,9 @@ func getPluginInfo(endpoint string) *driverInfo {
 }
 
 func main() {
-	endPointPtr := flag.String("endpoint", "foo", "a string")
+	var endPoint string
+	flag.StringVar(&endPoint, "endpoint", "", "Provide the driver's endpoint")
+	fmt.Printf("Endpoint: %s\n", endPoint)
 
 	var kubeconfig *string
 	if home := homeDir(); home != "" {
@@ -92,7 +94,7 @@ func main() {
 
 	flag.Parse()
 
-	if *endPointPtr == "foo" {
+	if endPoint == "" {
 		fmt.Printf("Need to provide Driver Endpoint\n")
 		return
 	}
@@ -103,7 +105,7 @@ func main() {
 	}
 
 	//Get the driver's name
-	driverInfo := getPluginInfo(*endPointPtr)
+	driverInfo := getPluginInfo(endPoint)
 
 	clientSet, csErr := kubernetes.NewForConfig(config)
 	if csErr != nil {
