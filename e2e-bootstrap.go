@@ -1,24 +1,24 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"github.com/container-storage-interface/spec/lib/go/csi/v0"
+	"google.golang.org/grpc"
 	"k8s.io/api/core/v1"
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-		"k8s.io/client-go/tools/clientcmd"
-	"path/filepath"
+	"k8s.io/client-go/tools/clientcmd"
 	"os"
-	"google.golang.org/grpc"
-	"github.com/container-storage-interface/spec/lib/go/csi/v0"
-	"context"
+	"path/filepath"
 )
 
 var deleteReclaimPolicy = v1.PersistentVolumeReclaimDelete
 
 type driverInfo struct {
-	name string
+	name         string
 	capabilities []*csi.PluginCapability
 }
 
@@ -41,7 +41,7 @@ func createStorageClass(driverName string) *storage.StorageClass {
 	return targetStorageClass
 }
 
-func getPluginInfo(endpoint string) (*driverInfo){
+func getPluginInfo(endpoint string) *driverInfo {
 	var driver = driverInfo{}
 	ctx := context.Background()
 
@@ -103,24 +103,19 @@ func main() {
 	}
 
 	//Get the driver's name
-	driverName, err := getDriverName(*endPointPtr)
-	if err != nil {
-		fmt.Printf("Unable to get Driver Name\n")
-	}
+	driverInfo := getPluginInfo(*endPointPtr)
 
 	clientSet, csErr := kubernetes.NewForConfig(config)
 	if csErr != nil {
 		panic(csErr.Error())
 	}
 
-	newStorageClass := createStorageClass(driverName)
+	newStorageClass := createStorageClass(driverInfo.name)
 
 	//Create the e2e-csi-test storage class object in the cluster
 	if _, scErr := clientSet.StorageV1().StorageClasses().Create(newStorageClass); scErr != nil {
 		panic(scErr.Error())
 	}
-
-
 
 }
 
@@ -130,4 +125,3 @@ func homeDir() string {
 	}
 	return os.Getenv("USERPROFILE") // windows
 }
-
