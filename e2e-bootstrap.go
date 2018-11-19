@@ -94,6 +94,7 @@ func getPluginInfo(network string, endpoint string) *driverInfo {
 }
 
 func main() {
+	//Sample command line call: go run e2e-bootstrap.go --endpoint 127.0.0.1:10000 --network tcp
 	var endPoint string
 	var network string
 	var kubeConfig *string
