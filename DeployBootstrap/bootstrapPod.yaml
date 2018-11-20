@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: e2e-bootstrap
-    image: e2e-bootsrap
+    image: mselvara/e2e-bootstrap:latest
     volumeMounts:
     - name: e2e-storage
       mountPath: /data/e2e
