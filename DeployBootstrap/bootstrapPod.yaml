@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: e2e-bootstrap
+spec:
+  containers:
+  - name: e2e-bootstrap
+    image: e2e-bootsrap
+    volumeMounts:
+    - name: e2e-storage
+      mountPath: /data/e2e
+    volumes:
+    - name: e2e-storage
+      emptyDir: {}
