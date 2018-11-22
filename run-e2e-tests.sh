@@ -17,7 +17,7 @@ printf "\nSSH key generated for GCE\n\n"
 
 #Deploy Bootstrap
 go build e2e-bootstrap.go
-docker build -f DeployBootstrap/Dockerfile -t mselvara/e2e-bootstrap .
+docker build -f DeployBootstrap/Dockerfile -t docker.io/mselvara/e2e-bootstrap:latest .
 kubectl create -f DeployBootstrap/bootstrapPod.yaml
 
 #Add e2e part here
