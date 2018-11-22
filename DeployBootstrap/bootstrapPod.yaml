@@ -9,6 +9,6 @@ spec:
     volumeMounts:
     - name: e2e-storage
       mountPath: /data/e2e
-    volumes:
-    - name: e2e-storage
-      emptyDir: {}
+  volumes:
+  - name: e2e-storage
+    emptyDir: {}

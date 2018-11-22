@@ -100,7 +100,7 @@ func main() {
 	var kubeConfig *string
 
 	flag.StringVar(&endPoint, "endpoint", "", "Provide the driver's endpoint")
-	flag.StringVar(&network, "network", "", "Provide the netowrk for the driver endpoint (ex: tcp or unix)")
+	flag.StringVar(&network, "network", "", "Provide the network for the driver endpoint (ex: tcp or unix)")
 
 	if home := homeDir(); home != "" {
 		kubeConfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
