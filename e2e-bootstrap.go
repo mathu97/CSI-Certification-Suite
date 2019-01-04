@@ -5,14 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/golang/glog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"k8s.io/api/core/v1"
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"net"
-	"os"
 	"time"
 )
 
@@ -42,28 +43,55 @@ func createStorageClass(driverName string) *storage.StorageClass {
 	return targetStorageClass
 }
 
-func getPluginInfo(network string, endpoint string) *driverInfo {
-	var driver = driverInfo{}
-	ctx := context.Background()
+func logGRPC(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	glog.V(5).Infof("GRPC call: %s", method)
+	glog.V(5).Infof("GRPC request: %+v", req)
+	err := invoker(ctx, method, req, reply, cc, opts...)
+	glog.V(5).Infof("GRPC response: %+v", reply)
+	glog.V(5).Infof("GRPC error: %v", err)
+	return err
+}
 
+func connect(network string, endpoint string) (*grpc.ClientConn, error) {
 	//Connect to the driver through the endpoint
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
 	clientCon, conErr := grpc.Dial(
 		endpoint,
 		grpc.WithInsecure(),
+		grpc.WithBackoffMaxDelay(time.Second),
+		grpc.WithUnaryInterceptor(logGRPC),
 		grpc.WithDialer(func(target string, timeout time.Duration) (net.Conn, error) {
-			return net.Dial(network, target)
+			return net.DialTimeout(network, target, timeout)
 		}),
 	)
 
 	if conErr != nil {
-		fmt.Printf("Unable to connect to Driver via gRPC\n")
-		conErr.Error()
+		return nil, conErr
 	}
 
-	identityClient := csi.NewIdentityClient(clientCon)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
 
+	for {
+		if !clientCon.WaitForStateChange(ctx, clientCon.GetState()) {
+			glog.V(4).Infof("Connection timed out")
+			return clientCon, nil // return nil, subsequent GetPluginInfo will show the real connection error
+		}
+		if clientCon.GetState() == connectivity.Ready {
+			glog.V(3).Infof("Connected")
+			return clientCon, nil
+		}
+		glog.V(4).Infof("Still trying, connection is %s", clientCon.GetState())
+	}
+
+}
+
+func getPluginInfo(connection *grpc.ClientConn) *driverInfo {
+	var driver = driverInfo{}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	identityClient := csi.NewIdentityClient(connection)
 	pInfoReq := &csi.GetPluginInfoRequest{}
 	res, pluginInfoErr := identityClient.GetPluginInfo(ctx, pInfoReq)
 
@@ -86,7 +114,7 @@ func getPluginInfo(network string, endpoint string) *driverInfo {
 
 	driver.capabilities = capRes.Capabilities
 
-	clientCon.Close()
+	connection.Close()
 
 	return &driver
 
@@ -101,13 +129,6 @@ func main() {
 	flag.StringVar(&endPoint, "endpoint", "", "Provide the driver's endpoint")
 	flag.StringVar(&network, "network", "", "Provide the network for the driver endpoint (ex: tcp or unix)")
 
-	//
-	//if home := homeDir(); home != "" {
-	//	kubeConfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	//} else {
-	//	kubeConfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	//}
-
 	flag.Parse()
 
 	if endPoint == "" || network == "" {
@@ -115,20 +136,14 @@ func main() {
 		return
 	}
 
-	//config, confErr := clientcmd.BuildConfigFromFlags("", *kubeConfig)
-	//if confErr != nil {
-	//	panic(confErr.Error())
-	//}
-	//
-
 	//Get the driver's name
-	driverInfo := getPluginInfo(network, endPoint)
+	clientConnection, connectionErr := connect(network, endPoint)
+	if connectionErr != nil {
+		fmt.Printf("Unable to connect to Driver via gRPC\n")
+		connectionErr.Error()
+	}
 
-	//clientSet, csErr := kubernetes.NewForConfig(config)
-	//if csErr != nil {
-	//	panic(csErr.Error())
-	//}
-
+	driverInfo := getPluginInfo(clientConnection)
 	newStorageClass := createStorageClass(driverInfo.name)
 
 	config, confErr := rest.InClusterConfig()
@@ -145,11 +160,4 @@ func main() {
 		panic(scErr.Error())
 	}
 
-}
-
-func homeDir() string {
-	if h := os.Getenv("HOME"); h != "" {
-		return h
-	}
-	return os.Getenv("USERPROFILE") // windows
 }
