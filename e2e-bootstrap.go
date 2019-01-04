@@ -12,8 +12,10 @@ import (
 	storage "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"net"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -124,10 +126,16 @@ func main() {
 	//Sample command line call: go run e2e-bootstrap.go --endpoint 127.0.0.1:10000 --network tcp
 	var endPoint string
 	var network string
-	//var kubeConfig *string
+	var kubeConfig *string
 
 	flag.StringVar(&endPoint, "endpoint", "", "Provide the driver's endpoint")
 	flag.StringVar(&network, "network", "", "Provide the network for the driver endpoint (ex: tcp or unix)")
+
+	if home := homeDir(); home != "" {
+		kubeConfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	} else {
+		kubeConfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	}
 
 	flag.Parse()
 
@@ -146,7 +154,7 @@ func main() {
 	driverInfo := getPluginInfo(clientConnection)
 	newStorageClass := createStorageClass(driverInfo.name)
 
-	config, confErr := rest.InClusterConfig()
+	config, confErr := clientcmd.BuildConfigFromFlags("", *kubeConfig)
 	if confErr != nil {
 		panic(confErr.Error())
 	}
@@ -160,4 +168,11 @@ func main() {
 		panic(scErr.Error())
 	}
 
+}
+
+func homeDir() string {
+	if h := os.Getenv("HOME"); h != "" {
+		return h
+	}
+	return os.Getenv("USERPROFILE") // windows
 }
