@@ -41,14 +41,4 @@
   - Create Snapshot
   - Delete Snapshot 
   - Test against non dynamically provisioned volume 
-### Current Implementation Status:
-- (Bootstrap) Automatically create a storage class for a the CSI Driver being tested so that it's easier for e2e-test to target it. 
-  - `e2e-bootstrap.go` currently creates a storage class named `e2e-csi-test` given the CSI Driver endpoint.
-  - It uses grpc calls to get the name and capabilities of the driver, to be able to create the storage class.
-- After completing the bootstrapping piece, need to run e2e tests that target the storage class created.
-- All of this is tied together into one shell script `run-e2e-tests.sh`, which should be ran in a clean GCE instane with kubernetes setup.
-  - This shell script will:
-    1) Stand up a kubernetes cluster
-    2) Setup Bootstrap
-    3) Run e2e Tests that target the created storage class (In Progress)
-    4) Bring down the cluster
+### [Design & Current Implementation Status](https://github.com/mathu97/CSI-Certification-Suite/blob/master/Design.md)
